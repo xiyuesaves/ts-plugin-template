@@ -5,72 +5,86 @@ const isDev = process.argv.includes("--watch");
 // 通用配置
 const baseConfig: BuildOptions = {
   bundle: true,
+  logLevel: "info",
   charset: "utf8",
   tsconfig: "./tsconfig.json",
 };
 
-// node 构建配置
-const mainConfig: BuildOptions = {
-  ...baseConfig,
-  platform: "node",
-  target: "node20",
-  format: "cjs",
-  entryPoints: ["src/main/index.ts"],
-  outfile: "dist/main/index.js",
-  external: ["electron"],
-};
-
-// preload 构建配置
-const preloadConfig: BuildOptions = {
-  ...baseConfig,
-  platform: "node",
-  target: "node20",
-  format: "cjs",
-  entryPoints: ["src/preload/index.ts"],
-  outfile: "dist/preload/index.js",
-  external: ["electron"],
-};
-
-// QwQNT web 构建配置
-const rendererQwQConfig: BuildOptions = {
-  ...baseConfig,
-  platform: "browser",
-  target: "esnext",
-  format: "cjs",
-  entryPoints: ["src/renderer/index.qwq.ts"],
-  outfile: "dist/renderer/index.qwq.js",
-};
-
-// renderer ll 构建配置
-const rendererLLConfig: BuildOptions = {
-  ...baseConfig,
-  platform: "browser",
-  target: "esnext",
-  format: "esm",
-  entryPoints: ["src/renderer/index.ll.ts"],
-  outfile: "dist/renderer/index.ll.js",
-};
+// 统一的构建目标列表
+const builds: { config: BuildOptions }[] = [
+  {
+    // main
+    config: {
+      ...baseConfig,
+      platform: "node",
+      target: "node20",
+      format: "cjs",
+      entryPoints: ["src/main/index.ts"],
+      outfile: "dist/main/index.js",
+      external: ["electron"],
+    },
+  },
+  {
+    // preload
+    config: {
+      ...baseConfig,
+      platform: "node",
+      target: "node20",
+      format: "cjs",
+      entryPoints: ["src/preload/index.ts"],
+      outfile: "dist/preload/index.js",
+      external: ["electron"],
+    },
+  },
+  {
+    // renderer-qwq
+    config: {
+      ...baseConfig,
+      platform: "browser",
+      target: "esnext",
+      format: "cjs",
+      entryPoints: ["src/renderer/index.qwq.ts"],
+      outfile: "dist/renderer/index.qwq.js",
+    },
+  },
+  {
+    // renderer-ll
+    config: {
+      ...baseConfig,
+      platform: "browser",
+      target: "esnext",
+      format: "esm",
+      entryPoints: ["src/renderer/index.ll.ts"],
+      outfile: "dist/renderer/index.ll.js",
+    },
+  },
+];
 
 // 构建函数
 async function runBuild() {
   if (isDev) {
     console.log("Starting development build...");
 
-    const mainCtx = await context(mainConfig);
-    const preloadCtx = await context(preloadConfig);
-    const rendererQwQCtx = await context(rendererQwQConfig);
-    const rendererLLCtx = await context(rendererLLConfig);
-
-    await mainCtx.watch();
-    await preloadCtx.watch();
-    await rendererQwQCtx.watch();
-    await rendererLLCtx.watch();
+    // 使用 Promise.all 和 map 统一处理上下文和 watch
+    const contexts = await Promise.all(
+      builds.map(async ({ config }) => {
+        const ctx = await context(config);
+        await ctx.watch();
+        return ctx;
+      }),
+    );
 
     console.log("Development build started. Watching for changes...");
+    return contexts;
   } else {
     console.log("Starting production build...");
     try {
-      await Promise.all([build(mainConfig), build(preloadConfig), build(rendererQwQConfig), build(rendererLLConfig)]);
+      // 遍历 builds 数组进行并行构建
+      await Promise.all(
+        builds.map(async ({ config }) => {
+          await build(config);
+        }),
+      );
       console.log("Production build completed successfully.");
     } catch (err) {
       console.error("Error during production build:", err);
@@ -78,6 +92,7 @@ async function runBuild() {
     }
   }
 }
+
 runBuild().catch((err) => {
   console.error("Unhandled error in build script:", err);
   process.exit(1);
