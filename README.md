@@ -36,7 +36,7 @@
   - `pnpm i`
 
 - 安装插件依赖
-  - 该模板默认引用了 [qwqnt-plugin_settings](https://github.com/qwqnt-community/qwqnt-plugin-settings) 插件来实现 qwqnt 下的插件设置面板，需要将该插件及其依赖一同放到 `plugins` 文件夹下，如果你要制作的插件不需要设置面板，可以删除 `package.json` 中 `qwqnt.dependencies` 下的 `qwqnt-plugin-settings`
+  - 该模板默认引用了 [qwqnt-hako](https://github.com/qwqnt-community/qwqnt-hako) 插件来实现 qwqnt 下的插件设置面板，需要将该插件及其依赖一同放到 `plugins` 文件夹下，如果你要制作的插件不需要设置面板，可以删除 `package.json` 中 `qwqnt.dependencies` 下的 `qwqnt-hako`
   - 在 [qwqnt-community](https://github.com/qwqnt-community/) 下还有更多可用的依赖插件，可以根据自己的需求安装
 
 - 调试模式
